@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SU Calendar — Aug–Dec 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --navy:#16305C; --navy-hover:#1F3F78;
+    --cream:#FAF7EF; --line:#E4DDC8; --line-soft:#F2EDDD;
+    --ink:#1E2A3A; --ink-soft:#3A4457; --muted:#9A927A;
+    --gold:#C7A552; --sage:#7C9473;
+    --meetings-bg:#DCE9F7; --meetings-text:#2C5A8C; --meetings-dot:#6FA0D6;
+    --ministry-bg:#E3EFDA; --ministry-text:#4B7A3B; --ministry-dot:#8FBB77;
+    --camps-bg:#FBE6CE; --camps-text:#B5651D; --camps-dot:#E8A055;
+    --training-bg:#EEE1F5; --training-text:#7B4A9E; --training-dot:#B98CD6;
+    --deadlines-bg:#FBDCE0; --deadlines-text:#C23E5A; --deadlines-dot:#E88098;
+    --leave-bg:#FCF0C8; --leave-text:#9C7C12; --leave-dot:#E8C158;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:'Inter',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+
+  /* header */
+  header{position:relative;overflow:hidden;border-bottom:1px solid var(--line);padding:32px 24px 20px;}
+  @media(min-width:768px){header{padding:32px 40px 20px;}}
+  header svg.leaf{position:absolute;top:-40px;right:-24px;width:160px;height:160px;opacity:.4;pointer-events:none;}
+  .eyebrow{display:flex;align-items:center;gap:8px;color:var(--navy);font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;}
+  h1{font-size:36px;font-weight:600;color:var(--navy);margin:6px 0 0;}
+  @media(min-width:768px){h1{font-size:48px;}}
+  .tagline{font-style:italic;color:var(--sage);margin:2px 0 0;}
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
+  .toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;}
+  .btn-download{display:flex;align-items:center;gap:7px;margin-top:20px;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:999px;padding:7px 16px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap;}
+  .btn-download:hover{background:var(--navy);color:#fff;}
+  .sync-status{font-size:11px;color:var(--muted);font-style:italic;}
+  .tab{border-radius:999px;padding:6px 16px;font-size:14px;font-weight:500;border:1px solid var(--line);background:#fff;color:var(--navy);cursor:pointer;transition:.15s;}
+  .tab:hover{background:#F1EBD9;}
+  .tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  /* layout */
+  .body-grid{display:grid;grid-template-columns:1fr;gap:24px;padding:24px;max-width:1400px;margin:0 auto;}
+  @media(min-width:900px){.body-grid{grid-template-columns:1fr 280px;padding:40px;}}
+
+  /* calendar */
+  .cal-card{border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  @media(min-width:768px){.cal-card{padding:20px;}}
+
+  .desktop-cal{display:block;}
+  .mobile-cal{display:none;}
+  @media(max-width:640px){
+    .desktop-cal{display:none;}
+    .mobile-cal{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+  }
+  .day-card{border:1px solid var(--line-soft);border-radius:8px;padding:5px 4px;min-height:58px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:2px;}
+  .day-card:active,.day-card:hover{background:#FBF9F1;}
+  .day-card .wd{font-size:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);}
+  .day-card .num{font-size:13px;font-weight:700;color:var(--navy);line-height:1;}
+  .day-card .card-chips{display:flex;flex-direction:column;gap:2px;margin-top:2px;}
+  .day-card .chip{font-size:8.5px;padding:2px 3px;line-height:1.2;border-radius:4px;}
+  .weekday-row{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line-soft);padding-bottom:8px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8A8370;}
+  .week{border-bottom:1px solid var(--line-soft);}
+  .week:last-child{border-bottom:none;}
+  .day-row{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));}
+  .day-cell{min-height:80px;min-width:0;border-right:1px solid var(--line-soft);padding:6px;cursor:pointer;transition:.1s;}
+  .day-cell:last-child{border-right:none;}
+  .day-cell.out{background:#FCFBF6;cursor:default;}
+  .day-cell.in:hover{background:#FBF9F1;}
+  .day-top{display:flex;align-items:center;justify-content:space-between;}
+  .day-num{font-size:13px;font-weight:600;color:#4A5568;}
+  .add-hint{opacity:0;color:var(--gold);transition:.1s;}
+  .day-cell.in:hover .add-hint{opacity:1;}
+  .chip-list{margin-top:4px;display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .chip{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;text-align:left;border:none;border-radius:5px;padding:3px 6px;font-size:11px;font-weight:500;line-height:1.35;cursor:pointer;white-space:normal;word-break:break-word;}
+  .lanes{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;padding:0 6px 6px;}
+  .lane-row{display:contents;}
+
+  /* sidebar */
+  .side-col{display:flex;flex-direction:column;gap:20px;}
+  .btn-add{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;background:var(--navy);color:#fff;padding:10px;font-size:14px;font-weight:600;border:none;cursor:pointer;width:100%;}
+  .btn-add:hover{background:var(--navy-hover);}
+  .side-card{border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px;}
+  .side-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);margin:0 0 10px;}
+  .event-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px;}
+  .event-list li{display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--ink-soft);}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+  .muted{color:var(--muted);}
+  .key-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:14px;color:var(--ink-soft);}
+  .key-list li{display:flex;align-items:center;gap:8px;}
+  .sq{width:10px;height:10px;border-radius:2px;}
+  .quote-card{border:1px solid var(--line);background:#F6F1E1;border-radius:16px;padding:16px;text-align:center;}
+  .quote-card p:first-child{font-style:italic;color:#5B6A50;margin:0;}
+  .quote-card p:last-child{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 0 0;}
+
+  footer{border-top:1px solid var(--line);padding:16px 24px;text-align:center;font-size:12px;color:var(--muted);}
+  @media(min-width:768px){footer{padding:16px 40px;}}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;}
+  .overlay.open{display:flex;}
+  .modal{width:100%;max-width:380px;border:1px solid var(--line);background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.15);}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .modal-head h2{font-size:18px;font-weight:600;color:var(--navy);margin:0;}
+  .icon-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:2px;}
+  .icon-btn:hover{color:var(--ink-soft);}
+  .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+  .field label{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);}
+  input[type=text],input[type=date],.text-input{border:1px solid #DDD3B8;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;outline:none;width:100%;}
+  input[type=text]:focus,input[type=date]:focus{border-color:var(--navy);}
+  .row2{display:flex;gap:8px;}
+  .row2 .field{flex:1;}
+  .with-icon{display:flex;align-items:center;gap:8px;border:1px solid #DDD3B8;border-radius:8px;padding:8px 10px;}
+  .with-icon input{border:none;outline:none;flex:1;font-size:14px;font-family:inherit;}
+  .with-icon svg{flex-shrink:0;color:var(--muted);}
+  .cat-picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+  .cat-pill{border:none;border-radius:999px;padding:5px 11px;font-size:11px;font-weight:500;cursor:pointer;}
+  .modal-actions{margin-top:16px;display:flex;align-items:center;justify-content:space-between;}
+  .delete-btn{display:flex;align-items:center;gap:5px;background:none;border:none;color:var(--deadlines-text);font-size:14px;font-weight:500;cursor:pointer;}
+  .save-btn{border:none;border-radius:8px;background:var(--navy);color:#fff;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;}
+  .save-btn:hover{background:var(--navy-hover);}
+  .save-btn:disabled{opacity:.6;cursor:default;}
+
+  .month-picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+  .month-chip{border:1px solid #DDD3B8;background:#fff;color:var(--ink-soft);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:500;cursor:pointer;}
+  .month-chip.selected{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .opt-picker{display:flex;gap:6px;margin-top:4px;}
+  .opt-pill{flex:1;border:1px solid #DDD3B8;background:#fff;color:var(--ink-soft);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:500;cursor:pointer;text-align:center;}
+  .opt-pill.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+  .download-hint{font-size:12px;color:var(--muted);margin:10px 0 0;min-height:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="leaf" viewBox="0 0 200 200">
+    <path d="M100 10 C140 40 170 80 150 130 C130 175 70 175 50 130 C30 80 60 40 100 10 Z" fill="#8FBB77" opacity="0.25" />
+    <path d="M120 40 C150 60 165 95 145 130" stroke="#C7A552" stroke-width="2" fill="none" opacity="0.5" />
+  </svg>
+  <div class="eyebrow">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 5.5 2 8.5A7 7 0 0 1 11 20Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 11 13 11 11"/></svg>
+    <span>Scripture Union · Singapore</span>
+  </div>
+  <h1 id="month-title" class="font-display">August 2026</h1>
+  <p class="tagline font-display">Planning · Prayer · Ministry ♡</p>
+  <div class="toolbar">
+    <div class="tabs" id="tabs"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:20px;">
+      <span id="sync-status" class="sync-status"></span>
+      <button class="btn-download" id="sync-now-btn" style="margin-top:0;" title="Push this device's data to the cloud, or pull the latest from the cloud">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
+        Sync now
+      </button>
+      <button class="btn-download" id="download-open-btn" style="margin-top:0;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        Download
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="body-grid">
+  <div class="cal-card">
+    <div class="desktop-cal" id="desktop-cal">
+      <div class="weekday-row">
+        <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+      </div>
+      <div id="weeks"></div>
+    </div>
+    <div class="mobile-cal" id="mobile-cal"></div>
+  </div>
+
+  <div class="side-col">
+    <button class="btn-add" id="add-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Add event
+    </button>
+
+    <div class="side-card">
+      <p class="side-title">This month</p>
+      <ul class="event-list" id="month-list"></ul>
+    </div>
+
+    <div class="side-card">
+      <p class="side-title">Colour key</p>
+      <ul class="key-list" id="key-list"></ul>
+    </div>
+
+    <div class="quote-card">
+      <p class="font-display">"Commit your work to the LORD, and your plans will be established."</p>
+      <p>Proverbs 16:3</p>
+    </div>
+  </div>
+</div>
+
+<footer>SU Office: 7 Armenian Street, #03-07 Bible House, Singapore 179932 &nbsp;·&nbsp; All dates and times are subject to change.</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title" class="font-display">Add event</h2>
+      <button class="icon-btn" id="close-modal">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="field">
+      <input type="text" id="f-title" placeholder="Event title" />
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Start</label>
+        <input type="date" id="f-start" />
+      </div>
+      <div class="field">
+        <label>End</label>
+        <input type="date" id="f-end" />
+      </div>
+    </div>
+    <div class="field">
+      <div class="with-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <input type="text" id="f-time" placeholder="Time (e.g. 4–5:30pm)" />
+      </div>
+    </div>
+    <div class="field">
+      <div class="with-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        <input type="text" id="f-location" placeholder="Location" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <div class="cat-picker" id="cat-picker"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="delete-btn" id="delete-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+        Delete
+      </button>
+      <span id="delete-spacer"></span>
+      <button class="save-btn" id="save-btn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="download-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 class="font-display">Download calendar</h2>
+      <button class="icon-btn" id="close-download">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="field">
+      <label>Month(s)</label>
+      <div class="month-picker" id="month-picker"></div>
+    </div>
+
+    <div class="field">
+      <label>File format</label>
+      <div class="opt-picker" id="format-picker">
+        <button type="button" class="opt-pill active" data-value="pdf">PDF</button>
+        <button type="button" class="opt-pill" data-value="png">PNG</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Paper size</label>
+      <div class="opt-picker" id="size-picker">
+        <button type="button" class="opt-pill active" data-value="a4">A4</button>
+        <button type="button" class="opt-pill" data-value="a3">A3</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Colour</label>
+      <div class="opt-picker" id="colour-picker">
+        <button type="button" class="opt-pill active" data-value="colour">Colour</button>
+        <button type="button" class="opt-pill" data-value="bw">Black &amp; white</button>
+      </div>
+    </div>
+
+    <p id="download-hint" class="download-hint"></p>
+
+    <div class="modal-actions" style="justify-content:flex-end;">
+      <button class="save-btn" id="do-download-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        Download
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ------------------------------- data ------------------------------- */
+
+const CATS = {
+  meetings:  { label: "Meetings",            bg: "var(--meetings-bg)",  text: "var(--meetings-text)",  dot: "var(--meetings-dot)" },
+  ministry:  { label: "Ministry Programmes", bg: "var(--ministry-bg)",  text: "var(--ministry-text)",  dot: "var(--ministry-dot)" },
+  camps:     { label: "Camps / Retreats",    bg: "var(--camps-bg)",     text: "var(--camps-text)",     dot: "var(--camps-dot)" },
+  training:  { label: "Training / Courses",  bg: "var(--training-bg)", text: "var(--training-text)",  dot: "var(--training-dot)" },
+  deadlines: { label: "Deadlines",           bg: "var(--deadlines-bg)", text: "var(--deadlines-text)", dot: "var(--deadlines-dot)" },
+  leave:     { label: "Annual Leave",        bg: "var(--leave-bg)",     text: "var(--leave-text)",     dot: "var(--leave-dot)" },
+};
+
+// literal hex equivalents of CATS, used for the html2canvas export path (avoids CSS var() resolution issues)
+const CATS_RAW = {
+  meetings:  { label: "Meetings",            bg: "#DCE9F7", text: "#2C5A8C", dot: "#6FA0D6" },
+  ministry:  { label: "Ministry Programmes", bg: "#E3EFDA", text: "#4B7A3B", dot: "#8FBB77" },
+  camps:     { label: "Camps / Retreats",    bg: "#FBE6CE", text: "#B5651D", dot: "#E8A055" },
+  training:  { label: "Training / Courses",  bg: "#EEE1F5", text: "#7B4A9E", dot: "#B98CD6" },
+  deadlines: { label: "Deadlines",           bg: "#FBDCE0", text: "#C23E5A", dot: "#E88098" },
+  leave:     { label: "Annual Leave",        bg: "#FCF0C8", text: "#9C7C12", dot: "#E8C158" },
+};
+
+const MONTHS = [
+  { year: 2026, month: 7,  label: "August 2026",    short: "August" },
+  { year: 2026, month: 8,  label: "September 2026", short: "September" },
+  { year: 2026, month: 9,  label: "October 2026",   short: "October" },
+  { year: 2026, month: 10, label: "November 2026",  short: "November" },
+  { year: 2026, month: 11, label: "December 2026",  short: "December" },
+];
+
+const seedEvents = [
+  { id:"e1",  title:"Kingdom Kintsugi Workshop", category:"ministry", start:"2026-08-01", end:"2026-08-01", time:"10am–1pm", location:"Waterloo Street" },
+  { id:"e2",  title:"Staff meeting", category:"meetings", start:"2026-08-03", end:"2026-08-03", time:"1:30pm", location:"" },
+  { id:"e3",  title:"Staff Retreat", category:"camps", start:"2026-08-05", end:"2026-08-07", time:"", location:"Villa @ JB" },
+  { id:"e4",  title:"Staff meeting", category:"meetings", start:"2026-08-11", end:"2026-08-11", time:"1:30pm", location:"" },
+  { id:"e59", title:"Sammi: Annual Leave", category:"leave", start:"2026-08-11", end:"2026-08-11", time:"", location:"" },
+  { id:"e5",  title:"SUPA Kids Programme", category:"ministry", start:"2026-08-12", end:"2026-08-12", time:"4–5:30pm", location:"Ahavah Student Centre" },
+  { id:"e60", title:"Luke: OIL", category:"leave", start:"2026-08-12", end:"2026-08-12", time:"", location:"" },
+  { id:"e61", title:"Christine: OIL (PM)", category:"leave", start:"2026-08-12", end:"2026-08-12", time:"1pm–6pm", location:"" },
+  { id:"e62", title:"ITE West - Calvin, Michael, Fuji", category:"ministry", start:"2026-08-12", end:"2026-08-12", time:"4pm–7pm", location:"" },
+  { id:"e63", title:"ITE Central - Calvin, Michael, Jeremy", category:"ministry", start:"2026-08-13", end:"2026-08-13", time:"11am – 2pm", location:"" },
+  { id:"e6",  title:"My Student Care Centre - All ministry staff", category:"ministry", start:"2026-08-14", end:"2026-08-14", time:"4–6pm", location:"@ Bartley" },
+  { id:"e64", title:"We Can Programme - Luke, Jeremy, Michael", category:"ministry", start:"2026-08-14", end:"2026-08-14", time:"2pm – 4pm", location:"" },
+  { id:"e65", title:"Fuji: OIL", category:"leave", start:"2026-08-14", end:"2026-08-14", time:"", location:"" },
+  { id:"e66", title:"Basil: OIL", category:"leave", start:"2026-08-14", end:"2026-08-14", time:"", location:"" },
+  { id:"e7",  title:"Event at Pentecost Methodist Church", category:"ministry", start:"2026-08-15", end:"2026-08-15", time:"2pm – 5pm", location:"" },
+  { id:"e8",  title:"Missions Sunday", category:"ministry", start:"2026-08-16", end:"2026-08-16", time:"9:30–11:30am", location:"Bethel Presbyterian Church" },
+  { id:"e9",  title:"Young Adult Bible Study", category:"training", start:"2026-08-17", end:"2026-08-17", time:"7:30pm", location:"SU Office" },
+  { id:"e10", title:"Prophetic Art painting for Staff", category:"training", start:"2026-08-19", end:"2026-08-19", time:"10am", location:"SU Office" },
+  { id:"e67", title:"Ruth: OIL (PM)", category:"leave", start:"2026-08-19", end:"2026-08-19", time:"1pm–6pm", location:"" },
+  { id:"e68", title:"We Can Programme - Luke, Jeremy, Michael", category:"ministry", start:"2026-08-21", end:"2026-08-21", time:"2pm – 4pm", location:"" },
+  { id:"e11", title:"EDMs to be completed", category:"deadlines", start:"2026-08-24", end:"2026-08-24", time:"", location:"" },
+  { id:"e12", title:"Prayer Meeting (tentative)", category:"meetings", start:"2026-08-26", end:"2026-08-26", time:"11am", location:"" },
+  { id:"e13", title:"EDMs to be sent out", category:"deadlines", start:"2026-08-28", end:"2026-08-28", time:"", location:"" },
+  { id:"e14", title:"We Can Programme - All ministry Staff", category:"ministry", start:"2026-08-28", end:"2026-08-28", time:"2pm – 5:30pm", location:"" },
+
+  { id:"e15", title:"SUPA Kids Programme", category:"ministry", start:"2026-09-02", end:"2026-09-02", time:"4–5:30pm", location:"Ahavah Student Centre" },
+  { id:"e16", title:"Bethany Emmanuel Church Day Camp (HTP)", category:"camps", start:"2026-09-05", end:"2026-09-05", time:"9am–5pm", location:"" },
+  { id:"e17", title:"Psychological First Aid for Children Course", category:"training", start:"2026-09-10", end:"2026-09-10", time:"10am–5pm", location:"" },
+  { id:"e18", title:"My Student Care Centre", category:"ministry", start:"2026-09-11", end:"2026-09-11", time:"4–6pm", location:"@ Bartley" },
+  { id:"e19", title:"SUPA Kids Programme", category:"ministry", start:"2026-09-12", end:"2026-09-12", time:"4–6pm", location:"My Student Care Centre" },
+  { id:"e20", title:"Grace AOG Children & Youth Missions", category:"ministry", start:"2026-09-13", end:"2026-09-13", time:"", location:"2 locations" },
+  { id:"e21", title:"East West Asia Community Support Gathering", category:"camps", start:"2026-09-14", end:"2026-09-18", time:"", location:"Bangkok" },
+  { id:"e22", title:"Ruth: Annual Leave", category:"leave", start:"2026-09-16", end:"2026-09-16", time:"", location:"" },
+  { id:"e23", title:"Ruth: Annual Leave", category:"leave", start:"2026-09-21", end:"2026-09-22", time:"", location:"" },
+  { id:"e24", title:"Budget submission deadline", category:"deadlines", start:"2026-09-18", end:"2026-09-18", time:"", location:"" },
+  { id:"e25", title:"We Can Programme session", category:"ministry", start:"2026-09-18", end:"2026-09-18", time:"", location:"" },
+  { id:"e26", title:"Walk Thru the Bible | otLIVE kids", category:"training", start:"2026-09-22", end:"2026-09-23", time:"10am–5pm", location:"" },
+  { id:"e27", title:"Walk Thru the Bible | otLIVE stories", category:"training", start:"2026-09-24", end:"2026-09-24", time:"10am–5pm", location:"" },
+
+  { id:"e28", title:"Children's Day @ Blessed Grace", category:"ministry", start:"2026-10-04", end:"2026-10-04", time:"2–4pm", location:"" },
+  { id:"e29", title:"SUPA Kids Programme", category:"ministry", start:"2026-10-07", end:"2026-10-07", time:"4–5:30pm", location:"Ahavah Student Centre" },
+  { id:"e30", title:"Psychological First Aid for Children Course", category:"training", start:"2026-10-08", end:"2026-10-08", time:"10am–5pm", location:"" },
+  { id:"e31", title:"We Can Programme session", category:"ministry", start:"2026-10-09", end:"2026-10-09", time:"", location:"" },
+  { id:"e32", title:"We Can Programme session", category:"ministry", start:"2026-10-16", end:"2026-10-16", time:"", location:"" },
+  { id:"e33", title:"We Can Programme session", category:"ministry", start:"2026-10-30", end:"2026-10-30", time:"", location:"" },
+  { id:"e34", title:"Yishun Christian Church, Children's Day Evangelism Outreach", category:"ministry", start:"2026-10-10", end:"2026-10-10", time:"1pm–4pm", location:"" },
+  { id:"e35", title:"Children's Day", category:"ministry", start:"2026-10-11", end:"2026-10-11", time:"2–4pm", location:"Bukit Panjang Methodist Church" },
+  { id:"e69", title:"Basil reservist", category:"leave", start:"2026-10-02", end:"2026-10-10", time:"", location:"" },
+  { id:"e70", title:"Christine: Annual Leave", category:"leave", start:"2026-10-05", end:"2026-10-13", time:"", location:"" },
+  { id:"e36", title:"Post PSLE camp", category:"camps", start:"2026-10-12", end:"2026-10-13", time:"9am–5pm", location:"" },
+  { id:"e37", title:"IBC Children's Programme", category:"ministry", start:"2026-10-18", end:"2026-10-18", time:"9am–12pm", location:"HTP – Agape" },
+  { id:"e38", title:"Christine: Annual Leave", category:"leave", start:"2026-10-22", end:"2026-10-24", time:"", location:"" },
+  { id:"e39", title:"Thanksgiving Dinner cum CPCM/BYMT Graduation", category:"ministry", start:"2026-10-22", end:"2026-10-22", time:"6:30pm", location:"Bible House Rooftop" },
+  { id:"e40", title:"Outreach Day Camp for Children", category:"camps", start:"2026-10-24", end:"2026-10-24", time:"9am–5pm", location:"Faith Methodist Church" },
+  { id:"e41", title:"Discipleship Training West Malaysia", category:"camps", start:"2026-10-26", end:"2026-10-31", time:"", location:"" },
+  { id:"e42", title:"Council to Approve Budget 2027", category:"deadlines", start:"2026-10-28", end:"2026-10-28", time:"", location:"" },
+
+  { id:"e43", title:"SUPA Kids Programme", category:"ministry", start:"2026-11-04", end:"2026-11-04", time:"4–5:30pm", location:"Ahavah Student Centre" },
+  { id:"e44", title:"St Francis Methodist School", category:"ministry", start:"2026-11-06", end:"2026-11-06", time:"8am–2:30pm", location:"" },
+  { id:"e45", title:"St Francis Methodist School", category:"ministry", start:"2026-11-13", end:"2026-11-13", time:"8am–2:30pm", location:"" },
+  { id:"e46", title:"Community Support Leadership Meet", category:"camps", start:"2026-11-10", end:"2026-11-14", time:"", location:"" },
+  { id:"e47", title:"Gillian: Annual Leave", category:"leave", start:"2026-11-10", end:"2026-11-16", time:"", location:"" },
+  { id:"e48", title:"St. George's Church (HTP)", category:"camps", start:"2026-11-20", end:"2026-11-22", time:"", location:"JB, Forest City" },
+  { id:"e49", title:"SUPA Camp Briefing", category:"ministry", start:"2026-11-21", end:"2026-11-21", time:"10am–3pm", location:"SU Office" },
+  { id:"e50", title:"Grace SCC Disciple Program", category:"ministry", start:"2026-11-22", end:"2026-11-22", time:"9am–12pm", location:"" },
+  { id:"e51", title:"SUPA Camp 2026", category:"camps", start:"2026-11-26", end:"2026-11-28", time:"", location:"Kampung Siglap" },
+
+  { id:"e52", title:"Gen Brave Conference | FOP X", category:"training", start:"2026-12-01", end:"2026-12-03", time:"9am–4pm", location:"Cornerstone Church" },
+  { id:"e53", title:"SU Youth Camp 2026", category:"camps", start:"2026-12-06", end:"2026-12-08", time:"", location:"CPT" },
+  { id:"e54", title:"Ahavah Camp (HTP)", category:"camps", start:"2026-12-15", end:"2026-12-17", time:"", location:"Volunteers' outreach 17 Dec PM" },
+  { id:"e58", title:"Christmas Grace Assembly of God", category:"ministry", start:"2026-12-20", end:"2026-12-20", time:"8:45am & 11am", location:"" },
+  { id:"e55", title:"Christine: Annual Leave", category:"leave", start:"2026-12-21", end:"2026-12-24", time:"", location:"" },
+  { id:"e56", title:"Christmas Yio Chu Kang Chapel", category:"ministry", start:"2026-12-25", end:"2026-12-25", time:"10:30am–12:30pm", location:"" },
+  { id:"e57", title:"Christmas International Baptist Church", category:"ministry", start:"2026-12-27", end:"2026-12-27", time:"", location:"" },
+];
+
+/* ------------------------------ state ------------------------------- */
+
+let events = loadLocalCache();
+let monthIdx = 0;
+let modalMode = null; // 'add' | 'edit'
+let modalData = null;
+let syncStatus = "idle"; // idle | syncing | error
+
+function loadLocalCache(){
+  try{
+    const raw = localStorage.getItem("su-calendar-events-html-v1");
+    if(raw) return JSON.parse(raw);
+  }catch(e){ /* localStorage unavailable — falls back to seed */ }
+  return JSON.parse(JSON.stringify(seedEvents));
+}
+function saveLocalCache(){
+  try{ localStorage.setItem("su-calendar-events-html-v1", JSON.stringify(events)); }catch(e){}
+}
+
+async function loadFromCloud(){
+  try{
+    const res = await fetch("/api/events");
+    if(res.ok){
+      const data = await res.json();
+      if(Array.isArray(data) && data.length){
+        events = data;
+        saveLocalCache();
+        renderAll();
+      }
+    }
+  }catch(e){
+    console.warn("Cloud sync unavailable — using local data only.", e);
+  }
+}
+
+async function persist(){
+  saveLocalCache();
+  setSyncStatus("syncing");
+  try{
+    const res = await fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(events),
+    });
+    if(!res.ok) throw new Error("save failed");
+    setSyncStatus("idle");
+  }catch(e){
+    console.warn("Could not sync to cloud — saved locally only.", e);
+    setSyncStatus("error");
+  }
+}
+
+function setSyncStatus(s){
+  syncStatus = s;
+  const el = document.getElementById("sync-status");
+  if(!el) return;
+  if(s === "syncing") el.textContent = "Syncing…";
+  else if(s === "error") el.textContent = "Offline — saved on this device only";
+  else el.textContent = "";
+}
+
+/* --------------------------- date helpers ---------------------------- */
+
+function fmt(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function getWeeks(year, month){
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month+1, 0);
+  const startOffset = (first.getDay()+6)%7;
+  const totalCells = Math.ceil((startOffset+last.getDate())/7)*7;
+  const weeks = [];
+  let cursor = 1-startOffset;
+  for(let w=0; w<totalCells/7; w++){
+    const row = [];
+    for(let d=0; d<7; d++){
+      const date = new Date(year, month, cursor);
+      row.push({ date, inMonth: date.getMonth()===month });
+      cursor++;
+    }
+    weeks.push(row);
+  }
+  return weeks;
+}
+function assignLanes(items){
+  const lanes = [];
+  return items.slice().sort((a,b)=>a.segStart-b.segStart).map(item=>{
+    let lane = lanes.findIndex(endCol => endCol < item.segStart);
+    if(lane===-1){ lane = lanes.length; lanes.push(item.segEnd); }
+    else{ lanes[lane] = item.segEnd; }
+    return Object.assign({}, item, { lane });
+  });
+}
+
+/* ------------------------------ render ------------------------------- */
+
+function renderTabs(){
+  const tabs = document.getElementById("tabs");
+  tabs.innerHTML = "";
+  MONTHS.forEach((m,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "tab" + (i===monthIdx ? " active" : "");
+    btn.textContent = m.short;
+    btn.onclick = ()=>{ monthIdx = i; renderAll(); };
+    tabs.appendChild(btn);
+  });
+}
+
+function renderMobileDays(){
+  const WD = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const { year, month } = MONTHS[monthIdx];
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const container = document.getElementById("mobile-cal");
+  container.innerHTML = "";
+
+  for(let d=1; d<=daysInMonth; d++){
+    const date = new Date(year, month, d);
+    const dateStr = fmt(date);
+    const wd = WD[(date.getDay()+6)%7];
+
+    const card = document.createElement("div");
+    card.className = "day-card";
+    card.onclick = ()=> openModal("add", { start: dateStr, end: dateStr });
+
+    const wdEl = document.createElement("div");
+    wdEl.className = "wd";
+    wdEl.textContent = wd;
+    card.appendChild(wdEl);
+
+    const numEl = document.createElement("div");
+    numEl.className = "num";
+    numEl.textContent = d;
+    card.appendChild(numEl);
+
+    const dayEvents = events.filter(e => e.start <= dateStr && e.end >= dateStr);
+    if(dayEvents.length){
+      const chips = document.createElement("div");
+      chips.className = "card-chips";
+      dayEvents.forEach(e=>{
+        const c = CATS[e.category];
+        const chip = document.createElement("button");
+        chip.className = "chip";
+        chip.style.background = c.bg;
+        chip.style.color = c.text;
+        chip.textContent = e.title;
+        chip.title = e.title;
+        chip.onclick = (ev)=>{ ev.stopPropagation(); openModal("edit", e); };
+        chips.appendChild(chip);
+      });
+      card.appendChild(chips);
+    }
+
+    container.appendChild(card);
+  }
+}
+
+function renderCalendar(){
+  const { year, month, label } = MONTHS[monthIdx];
+  document.getElementById("month-title").textContent = label;
+
+  const weeks = getWeeks(year, month);
+  const weeksEl = document.getElementById("weeks");
+  weeksEl.innerHTML = "";
+
+  weeks.forEach(week=>{
+    const weekStart = fmt(week[0].date);
+    const weekEnd = fmt(week[6].date);
+
+    const weekWrap = document.createElement("div");
+    weekWrap.className = "week";
+
+    const dayRow = document.createElement("div");
+    dayRow.className = "day-row";
+
+    week.forEach(cell=>{
+      const dateStr = fmt(cell.date);
+      const dayCell = document.createElement("div");
+      dayCell.className = "day-cell " + (cell.inMonth ? "in" : "out");
+
+      if(cell.inMonth){
+        dayCell.onclick = ()=> openModal("add", { start: dateStr, end: dateStr });
+
+        const top = document.createElement("div");
+        top.className = "day-top";
+        top.innerHTML = `<span class="day-num">${cell.date.getDate()}</span>
+          <svg class="add-hint" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
+        dayCell.appendChild(top);
+
+        const singles = events.filter(e=>e.start===e.end && e.start===dateStr);
+        if(singles.length){
+          const list = document.createElement("div");
+          list.className = "chip-list";
+          singles.forEach(e=>{
+            const c = CATS[e.category];
+            const chip = document.createElement("button");
+            chip.className = "chip";
+            chip.style.background = c.bg;
+            chip.style.color = c.text;
+            chip.textContent = e.title;
+            chip.title = e.title;
+            chip.onclick = (ev)=>{ ev.stopPropagation(); openModal("edit", e); };
+            list.appendChild(chip);
+          });
+          dayCell.appendChild(list);
+        }
+      }
+      dayRow.appendChild(dayCell);
+    });
+    weekWrap.appendChild(dayRow);
+
+    const multi = events.filter(e=> e.start!==e.end && e.end>=weekStart && e.start<=weekEnd)
+      .map(e=>{
+        const segStart = e.start < weekStart ? 0 : week.findIndex(c=>fmt(c.date)===e.start);
+        const segEnd = e.end > weekEnd ? 6 : week.findIndex(c=>fmt(c.date)===e.end);
+        return Object.assign({}, e, { segStart, segEnd });
+      });
+    const laned = assignLanes(multi);
+    const laneCount = laned.reduce((m,l)=>Math.max(m,l.lane+1), 0);
+
+    if(laneCount>0){
+      const lanesEl = document.createElement("div");
+      lanesEl.className = "lanes";
+      for(let li=0; li<laneCount; li++){
+        laned.filter(l=>l.lane===li).forEach(l=>{
+          const c = CATS[l.category];
+          const bar = document.createElement("button");
+          bar.className = "chip";
+          bar.style.gridColumn = (l.segStart+1) + " / " + (l.segEnd+2);
+          bar.style.background = c.bg;
+          bar.style.color = c.text;
+          bar.style.padding = "3px 8px";
+          bar.textContent = l.title;
+          bar.title = l.title;
+          bar.onclick = ()=> openModal("edit", l);
+          lanesEl.appendChild(bar);
+        });
+      }
+      weekWrap.appendChild(lanesEl);
+    }
+
+    weeksEl.appendChild(weekWrap);
+  });
+
+  renderMobileDays();
+}
+
+function renderSidebar(){
+  const { year, month } = MONTHS[monthIdx];
+  const monthStart = fmt(new Date(year, month, 1));
+  const monthEnd = fmt(new Date(year, month+1, 0));
+  const monthEvents = events.filter(e=> e.end>=monthStart && e.start<=monthEnd)
+    .sort((a,b)=>a.start.localeCompare(b.start));
+
+  const list = document.getElementById("month-list");
+  list.innerHTML = "";
+  if(monthEvents.length===0){
+    list.innerHTML = `<li class="muted">No events yet.</li>`;
+  }
+  monthEvents.forEach(e=>{
+    const c = CATS[e.category];
+    const s = new Date(e.start+"T00:00:00");
+    const en = new Date(e.end+"T00:00:00");
+    const range = e.start===e.end ? s.getDate() : `${s.getDate()}–${en.getDate()}`;
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="dot" style="background:${c.dot}"></span><span>${e.title} <span class="muted">(${range})</span></span>`;
+    li.onclick = ()=> openModal("edit", e);
+    list.appendChild(li);
+  });
+
+  const keyList = document.getElementById("key-list");
+  if(!keyList.dataset.built){
+    keyList.innerHTML = Object.entries(CATS).map(([k,c])=>
+      `<li><span class="sq" style="background:${c.dot}"></span>${c.label}</li>`
+    ).join("");
+    keyList.dataset.built = "1";
+  }
+}
+
+function renderCatPicker(selected){
+  const picker = document.getElementById("cat-picker");
+  picker.innerHTML = "";
+  Object.entries(CATS).forEach(([k,c])=>{
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "cat-pill";
+    btn.textContent = c.label;
+    const active = k===selected;
+    btn.style.background = active ? c.dot : c.bg;
+    btn.style.color = active ? "#fff" : c.text;
+    btn.onclick = ()=>{ modalData.category = k; renderCatPicker(k); };
+    picker.appendChild(btn);
+  });
+}
+
+function renderAll(){
+  renderTabs();
+  renderCalendar();
+  renderSidebar();
+}
+
+/* ------------------------------- modal -------------------------------- */
+
+function openModal(mode, data){
+  modalMode = mode;
+  modalData = mode==="add"
+    ? { id:null, title:"", category:"ministry", start:data.start, end:data.end, time:"", location:"" }
+    : Object.assign({}, data);
+
+  document.getElementById("modal-title").textContent = mode==="add" ? "Add event" : "Edit event";
+  document.getElementById("f-title").value = modalData.title;
+  document.getElementById("f-start").value = modalData.start;
+  document.getElementById("f-end").value = modalData.end;
+  document.getElementById("f-time").value = modalData.time;
+  document.getElementById("f-location").value = modalData.location;
+  renderCatPicker(modalData.category);
+  document.getElementById("delete-btn").style.display = mode==="edit" ? "flex" : "none";
+
+  document.getElementById("overlay").classList.add("open");
+}
+function closeModal(){
+  document.getElementById("overlay").classList.remove("open");
+  modalMode = null; modalData = null;
+}
+function saveModal(){
+  const title = document.getElementById("f-title").value.trim();
+  if(!title) return;
+  const start = document.getElementById("f-start").value;
+  let end = document.getElementById("f-end").value;
+  if(!end || end < start) end = start;
+  const time = document.getElementById("f-time").value;
+  const location = document.getElementById("f-location").value;
+  const category = modalData.category;
+
+  if(modalMode==="add"){
+    events.push({ id:"e"+Date.now(), title, category, start, end, time, location });
+  }else{
+    const idx = events.findIndex(e=>e.id===modalData.id);
+    if(idx>-1) events[idx] = Object.assign({}, events[idx], { title, category, start, end, time, location });
+  }
+  persist();
+  closeModal();
+  renderAll();
+}
+function deleteModal(){
+  events = events.filter(e=>e.id!==modalData.id);
+  persist();
+  closeModal();
+  renderAll();
+}
+
+/* ------------------------------- wire up -------------------------------- */
+
+document.getElementById("add-btn").onclick = ()=>{
+  const { year, month } = MONTHS[monthIdx];
+  const d = fmt(new Date(year, month, 1));
+  openModal("add", { start:d, end:d });
+};
+document.getElementById("close-modal").onclick = closeModal;
+document.getElementById("overlay").onclick = (e)=>{ if(e.target.id==="overlay") closeModal(); };
+document.getElementById("save-btn").onclick = saveModal;
+document.getElementById("delete-btn").onclick = deleteModal;
+
+/* ------------------------------- export -------------------------------- */
+
+let dlSelectedMonths = new Set();
+let dlFormat = "pdf";
+let dlSize = "a4";
+let dlColour = "colour";
+
+function renderMonthPicker(){
+  const picker = document.getElementById("month-picker");
+  picker.innerHTML = "";
+  MONTHS.forEach((m,i)=>{
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "month-chip" + (dlSelectedMonths.has(i) ? " selected" : "");
+    chip.textContent = m.short;
+    chip.onclick = ()=>{
+      if(dlSelectedMonths.has(i)) dlSelectedMonths.delete(i);
+      else dlSelectedMonths.add(i);
+      renderMonthPicker();
+    };
+    picker.appendChild(chip);
+  });
+}
+
+function wireOptPicker(id, onSet){
+  const wrap = document.getElementById(id);
+  wrap.querySelectorAll(".opt-pill").forEach(btn=>{
+    btn.onclick = ()=>{
+      wrap.querySelectorAll(".opt-pill").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      onSet(btn.dataset.value);
+    };
+  });
+}
+wireOptPicker("format-picker", v=>{ dlFormat = v; updateDownloadHint(); });
+wireOptPicker("size-picker", v=>{ dlSize = v; updateDownloadHint(); });
+wireOptPicker("colour-picker", v=>{ dlColour = v; });
+
+function updateDownloadHint(){
+  const hint = document.getElementById("download-hint");
+  if(dlFormat === "png"){
+    hint.textContent = "Multiple months will be saved together as a .zip of PNG images.";
+  }else{
+    hint.textContent = "All selected months will be combined into a single " + dlSize.toUpperCase() + " PDF.";
+  }
+}
+
+document.getElementById("sync-now-btn").onclick = async ()=>{
+  const btn = document.getElementById("sync-now-btn");
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = "Checking…";
+  try{
+    const res = await fetch("/api/events");
+    if(!res.ok) throw new Error("no response");
+    const cloudData = await res.json();
+    const cloudHasData = Array.isArray(cloudData) && cloudData.length > 0;
+
+    if(cloudHasData){
+      const useCloud = confirm(
+        "The cloud already has saved events.\n\n" +
+        "Click OK to REPLACE this device's calendar with the cloud copy.\n" +
+        "Click Cancel to instead PUSH this device's data up and overwrite the cloud."
+      );
+      if(useCloud){
+        events = cloudData;
+        saveLocalCache();
+        renderAll();
+        alert("Pulled the latest data from the cloud.");
+      }else{
+        await persist();
+        alert("Pushed this device's data to the cloud.");
+      }
+    }else{
+      await persist();
+      alert("Cloud was empty — pushed this device's data up to the cloud.");
+    }
+  }catch(e){
+    alert("Couldn't reach the cloud. Make sure the backend is deployed (netlify.toml + netlify/functions) and you're online.");
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+};
+
+document.getElementById("download-open-btn").onclick = ()=>{
+  dlSelectedMonths = new Set([monthIdx]);
+  renderMonthPicker();
+  updateDownloadHint();
+  document.getElementById("download-overlay").classList.add("open");
+};
+document.getElementById("close-download").onclick = ()=> document.getElementById("download-overlay").classList.remove("open");
+document.getElementById("download-overlay").onclick = (e)=>{ if(e.target.id==="download-overlay") e.currentTarget.classList.remove("open"); };
+
+document.getElementById("do-download-btn").onclick = async ()=>{
+  const months = Array.from(dlSelectedMonths).sort((a,b)=>a-b);
+  if(months.length===0){
+    document.getElementById("download-hint").textContent = "Please select at least one month.";
+    return;
+  }
+  const btn = document.getElementById("do-download-btn");
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = "Preparing…";
+  try{
+    if(dlFormat === "pdf"){
+      await exportPDF(months, dlColour, dlSize);
+    }else{
+      await exportPNG(months, dlColour, dlSize);
+    }
+    document.getElementById("download-overlay").classList.remove("open");
+  }catch(err){
+    console.error(err);
+    document.getElementById("download-hint").textContent = "Something went wrong generating the file. Please try again.";
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+};
+
+// builds an off-screen, print-styled version of a month for capture
+function buildPrintableMonth(monthIndex){
+  const { year, month, label } = MONTHS[monthIndex];
+  const weeks = getWeeks(year, month);
+
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "position:fixed;top:-10000px;left:-10000px;width:1600px;background:#FAF7EF;font-family:'Inter',sans-serif;padding:44px;box-sizing:border-box;";
+
+  const head = document.createElement("div");
+  head.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;color:#16305C;font-size:14px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px;">Scripture Union · Singapore</div>
+    <div style="font-family:'Fraunces',serif;font-size:52px;font-weight:600;color:#16305C;margin-bottom:2px;">${label}</div>
+    <div style="font-family:'Fraunces',serif;font-style:italic;color:#7C9473;font-size:20px;margin-bottom:24px;">Planning · Prayer · Ministry ♡</div>
+  `;
+  wrap.appendChild(head);
+
+  const card = document.createElement("div");
+  card.style.cssText = "border:1px solid #E4DDC8;background:#fff;border-radius:16px;padding:22px;";
+
+  const weekdayRow = document.createElement("div");
+  weekdayRow.style.cssText = "display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid #F2EDDD;padding-bottom:10px;text-align:center;font-size:14px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8A8370;";
+  ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(d=>{
+    const el = document.createElement("div"); el.textContent = d; weekdayRow.appendChild(el);
+  });
+  card.appendChild(weekdayRow);
+
+  weeks.forEach(week=>{
+    const weekStart = fmt(week[0].date);
+    const weekEnd = fmt(week[6].date);
+
+    const weekWrap = document.createElement("div");
+    weekWrap.style.cssText = "border-bottom:1px solid #F2EDDD;";
+
+    const dayRow = document.createElement("div");
+    dayRow.style.cssText = "display:grid;grid-template-columns:repeat(7,minmax(0,1fr));";
+
+    week.forEach(cell=>{
+      const dateStr = fmt(cell.date);
+      const dayCell = document.createElement("div");
+      dayCell.style.cssText = "min-height:108px;min-width:0;border-right:1px solid #F2EDDD;padding:8px;" + (cell.inMonth ? "" : "background:#FCFBF6;");
+
+      if(cell.inMonth){
+        const num = document.createElement("div");
+        num.style.cssText = "font-size:15px;font-weight:700;color:#4A5568;margin-bottom:4px;";
+        num.textContent = cell.date.getDate();
+        dayCell.appendChild(num);
+
+        events.filter(e=>e.start===e.end && e.start===dateStr).forEach(e=>{
+          const c = CATS_RAW[e.category];
+          const chip = document.createElement("div");
+          chip.style.cssText = `background:${c.bg};color:${c.text};border-radius:5px;padding:3px 6px;font-size:12px;font-weight:500;line-height:1.3;margin-bottom:3px;word-break:break-word;`;
+          chip.textContent = e.title + (e.time ? " · " + e.time : "");
+          dayCell.appendChild(chip);
+        });
+      }
+      dayRow.appendChild(dayCell);
+    });
+    weekWrap.appendChild(dayRow);
+
+    const multi = events.filter(e=> e.start!==e.end && e.end>=weekStart && e.start<=weekEnd)
+      .map(e=>{
+        const segStart = e.start < weekStart ? 0 : week.findIndex(c=>fmt(c.date)===e.start);
+        const segEnd = e.end > weekEnd ? 6 : week.findIndex(c=>fmt(c.date)===e.end);
+        return Object.assign({}, e, { segStart, segEnd });
+      });
+    const laned = assignLanes(multi);
+    const laneCount = laned.reduce((m,l)=>Math.max(m,l.lane+1), 0);
+
+    if(laneCount>0){
+      const lanesEl = document.createElement("div");
+      lanesEl.style.cssText = "display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;padding:0 8px 8px;";
+      for(let li=0; li<laneCount; li++){
+        laned.filter(l=>l.lane===li).forEach(l=>{
+          const c = CATS_RAW[l.category];
+          const bar = document.createElement("div");
+          bar.style.cssText = `grid-column:${l.segStart+1} / ${l.segEnd+2};background:${c.bg};color:${c.text};border-radius:5px;padding:4px 9px;font-size:12px;font-weight:500;word-break:break-word;`;
+          bar.textContent = l.title;
+          lanesEl.appendChild(bar);
+        });
+      }
+      weekWrap.appendChild(lanesEl);
+    }
+
+    card.appendChild(weekWrap);
+  });
+
+  wrap.appendChild(card);
+
+  const key = document.createElement("div");
+  key.style.cssText = "display:flex;flex-wrap:wrap;gap:16px;margin-top:20px;font-size:13px;color:#3A4457;";
+  Object.entries(CATS_RAW).forEach(([k,c])=>{
+    const item = document.createElement("span");
+    item.style.cssText = "display:inline-flex;align-items:center;gap:6px;";
+    item.innerHTML = `<span style="width:11px;height:11px;border-radius:2px;background:${c.dot};display:inline-block;"></span>${c.label}`;
+    key.appendChild(item);
+  });
+  wrap.appendChild(key);
+
+  const foot = document.createElement("div");
+  foot.style.cssText = "margin-top:16px;font-size:11px;color:#9A927A;";
+  foot.textContent = "SU Office: 7 Armenian Street, #03-07 Bible House, Singapore 179932";
+  wrap.appendChild(foot);
+
+  document.body.appendChild(wrap);
+  return wrap;
+}
+
+function toGrayscale(canvas){
+  const ctx = canvas.getContext("2d");
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const d = imgData.data;
+  for(let i = 0; i < d.length; i += 4){
+    const gray = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+    d[i] = d[i+1] = d[i+2] = gray;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return canvas;
+}
+
+async function renderMonthCanvas(monthIndex, colourMode, paperSize){
+  const node = buildPrintableMonth(monthIndex);
+  const scale = paperSize === "a3" ? 2.5 : 2;
+  const canvas = await html2canvas(node, { scale, backgroundColor: "#FAF7EF", useCORS: true });
+  document.body.removeChild(node);
+  if(colourMode === "bw") toGrayscale(canvas);
+  return canvas;
+}
+
+function triggerDownload(url, filename){
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+async function exportPDF(monthIndices, colourMode, paperSize){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: paperSize });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 8;
+
+  for(let i=0; i<monthIndices.length; i++){
+    const canvas = await renderMonthCanvas(monthIndices[i], colourMode, paperSize);
+    const imgData = canvas.toDataURL("image/png");
+    const availW = pageW - margin*2, availH = pageH - margin*2;
+    const ratio = Math.min(availW/canvas.width, availH/canvas.height);
+    const w = canvas.width*ratio, h = canvas.height*ratio;
+    const x = (pageW - w)/2, y = (pageH - h)/2;
+    if(i>0) doc.addPage(paperSize, "landscape");
+    doc.addImage(imgData, "PNG", x, y, w, h);
+  }
+  doc.save("SU-Calendar.pdf");
+}
+
+async function exportPNG(monthIndices, colourMode, paperSize){
+  if(monthIndices.length === 1){
+    const canvas = await renderMonthCanvas(monthIndices[0], colourMode, paperSize);
+    const url = canvas.toDataURL("image/png");
+    triggerDownload(url, MONTHS[monthIndices[0]].short + "-2026.png");
+    return;
+  }
+  const zip = new JSZip();
+  for(const idx of monthIndices){
+    const canvas = await renderMonthCanvas(idx, colourMode, paperSize);
+    const blob = await new Promise(res=>canvas.toBlob(res, "image/png"));
+    zip.file(MONTHS[idx].short + "-2026.png", blob);
+  }
+  const content = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(content);
+  triggerDownload(url, "SU-Calendar-Images.zip");
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+renderAll();
+loadFromCloud();
+</script>
+</body>
+</html>
